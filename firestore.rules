@@ -1,0 +1,47 @@
+rules_version = '2';
+
+// Pega este contenido en: Firebase Console > Firestore Database > Reglas > Publicar
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    // Perfiles de usuario
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+
+      // Al registrarse, el rol SIEMPRE debe ser "usuario" (nadie puede auto-asignarse admin)
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.rol == 'usuario'
+        && request.resource.data.keys().hasOnly(['nombre', 'email', 'telefono', 'institucion', 'rol', 'creado']);
+
+      // El usuario puede editar sus datos pero no cambiar su rol
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.rol == resource.data.rol;
+
+      allow delete: if false;
+    }
+
+    // Tickets de soporte
+    match /tickets/{ticketId} {
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.estado == 'abierto';
+
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+
+      // Solo el administrador cambia estado y respuesta
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+  }
+}

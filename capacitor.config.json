@@ -1,0 +1,13 @@
+{
+  "appId": "com.senatic.soportevirtual",
+  "appName": "Soporte Técnico Virtual",
+  "webDir": "dist",
+  "backgroundColor": "#FFFFFF",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "DARK",
+      "hidden": false
+    }
+  }
+}
