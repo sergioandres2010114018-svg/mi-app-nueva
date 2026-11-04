@@ -26,3 +26,36 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Compilar la app web
+        run: npm run build
+
+      - name: Crear proyecto Android
+        run: npx cap add android
+
+      - name: Aplicar logo como ícono
+        run: |
+          python3 -m pip install --break-system-packages pillow
+          python3 scripts/patch-android.py
+
+      - name: Sincronizar Capacitor
+        run: npx cap sync android
+
+      - name: Compilar APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Renombrar APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk SoporteTecnicoVirtual.apk
+
+      - name: Subir APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: SoporteTecnicoVirtual-APK
+          path: SoporteTecnicoVirtual.apk
+          if-no-files-found: error
